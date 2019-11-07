@@ -155,10 +155,10 @@ public class GhostAI : MonoBehaviour {
     {
         if(magC < magT)
         {
-            return true;
+            return false;
         }
 
-        return false;
+        return true;
     }
     public bool checkDirectionClear(Vector2 direction, Vector3 t)
     {
@@ -201,82 +201,172 @@ public class GhostAI : MonoBehaviour {
         }
         return true;
     }
-    private List<List<int>> NOP(Vector3 t, Vector3 p, List<List<int>> R)
+    private List<List<int>> R = new List<List<int>>();
+    private float[] choicesM = new float[4];
+
+    private List<int> smallestA(float[] arr)
     {
-        if(R.Count == 0)
+        float lowest = 99999f;
+        int index = 0;
+        for(int i = 0; i < arr.Length; i++)
         {
-            R.Add(new List<int>());
+            if(arr[i] < lowest && arr[i] != -1)
+            {
+                lowest = arr[i];
+                index = i;
+            }
         }
+        List<int> indexes = new List<int>();
+        for (int i = 0; i < arr.Length; i++)
+        {
+            if (arr[i] == lowest)
+            {
+                indexes.Add(i);
+            }
+        }
+        return indexes;
+    }
+    private void NOP(Vector3 t, Vector3 p, List<int> r)
+    {
+        Debug.Log(t);
         Vector3 d = t - p; //current - pacman
         float m = d.magnitude; // magnitude of d
         Vector3 tempT = t;
+        if(r.Count >= 30)
+        {
+            R.Add(r);
+            return;
+        }
         if(m != 0)
         {
             //UP
             if(checkDirectionClear(new Vector2(0f, 1f), t))
             {
-                if(smallerM(m, (t + new Vector3(0f, 1f, 0f)).magnitude))
+                if(smallerM(m, ((t + new Vector3(0f, 1f, 0f))-p).magnitude))
                 {
-                    t += new Vector3(0f, 1f, 0f);
-                    R[R.Count - 1].Add(0);
-                    return NOP(t, p, R);
+                    //t += new Vector3(0f, 1f, 0f);
+                    choicesM[0] = ((t + new Vector3(0f, 1f, 0f)) - p).magnitude;
                 }
-            }//DOWN
-            if(checkDirectionClear(new Vector2(0f, -1f), t))
+                else
+                {
+                    choicesM[0] = -1;
+                }
+            }
+            else
             {
-                if (smallerM(m, (t + new Vector3(0f, -1f, 0f)).magnitude))
+                choicesM[0] = -1;
+            }//DOWN
+            if (checkDirectionClear(new Vector2(0f, -1f), t))
+            {
+                if (smallerM(m, ((t + new Vector3(0f, -1f, 0f)) - p).magnitude))
                 {
-                    t += new Vector3(0f, -1f, 0f);
-                    R[R.Count - 1].Add(2);
-                    return NOP(t, p, R);
+                    //t += new Vector3(0f, -1f, 0f);
+
+                    choicesM[2] = ((t + new Vector3(0f, -1f, 0f)) - p).magnitude;
                 }
+                else
+                {
+                    choicesM[2] = -1;
+                }
+            }
+            else
+            {
+                choicesM[2] = -1;
             }
             //LEFT
-            if (checkDirectionClear(new Vector2(1f, 0f), t))
-            {
-                if (smallerM(m, (t + new Vector3(1f, 0f, 0f)).magnitude))
-                {
-                    t += new Vector3(1f, 0f, 0f);
-                    R[R.Count - 1].Add(1);
-                    return NOP(t, p, R);
-                }
-            }
-            //RIGHT
             if (checkDirectionClear(new Vector2(-1f, 0f), t))
             {
-                if (smallerM(m, (t + new Vector3(-1f, 0f, 0f)).magnitude))
+                if (smallerM(m, ((t + new Vector3(-1f, 0f, 0f))-p).magnitude))
                 {
-                    t += new Vector3(-1f, 0f, 0f);
-                    R[R.Count - 1].Add(3);
-                    return NOP(t, p, R);
+                    
+                    
+                    choicesM[3] = ((t + new Vector3(-1f, 0f, 0f)) - p).magnitude;
+                }
+                else
+                {
+                    choicesM[3] = -1;
                 }
             }
-        }else{
-            //Reached path
-            R.Add(new List<int>());
+            else
+            {
+                choicesM[3] = -1;
+            }
+            //RIGHT
+            if (checkDirectionClear(new Vector2(1f, 0f), t))
+            {
+                if (smallerM(m, ((t + new Vector3(1f, 0f, 0f))-p).magnitude))
+                {
+                    //t += new Vector3(1f, 0f, 0f);
+                    
+                    choicesM[1] = ((t + new Vector3(1f, 0f, 0f)) - p).magnitude;
+                }
+                else
+                {
+                    choicesM[1] = -1;
+                }
+            }
+            else
+            {
+                choicesM[1] = -1;
+            }
+            foreach(float cm in choicesM){
+                Debug.Log(cm);
+            }
+            List<int> low = smallestA(choicesM);
+            foreach(int rl in low)
+            {
+                Debug.Log("RL" + " " + rl);
+            }
+            foreach (int l in low)
+            {
+                switch (l)
+                {
+                    case 0:
+                        t += new Vector3(0f, 1f, 0f);
+                        Debug.Log("UP");
+                        break;
+                    case 1:
+                        Debug.Log("RIGHT");
+                        t += new Vector3(1f, 0f, 0f);
+                        break;
+                    case 2:
+                        Debug.Log("DOWN");
+                        t += new Vector3(0f, -1f, 0f);
+                        break;
+                    case 3:
+                        Debug.Log("LEFT");
+                        t += new Vector3(-1f, 0f, 0f);
+                        break;
+                }
+                r.Add(l);
+                NOP(t, p, r);
+            }
+        }else { 
+            R.Add(r);
         }
-        return R;
+        //return R;
+        return;
     }
 
     private int cc = 0;
     void Update() {
         if (name == "Blinky(Clone)" && cc == 0)
         {
-            Debug.Log("T: " + transform.position);
-            Debug.Log(transform.position - pacMan.transform.position + "  " + (transform.position - pacMan.transform.position).magnitude);
-            Debug.Log("pM: " + pacMan.transform.position);
             List<List<int>> Results = new List<List<int>>();
-            List<List<int>> R = NOP(transform.position, pacMan.transform.position, Results);
+            R = new List<List<int>>();
+            NOP(transform.position, pacMan.transform.position, new List<int>());
 
+            Debug.Log("R" + R.Count);
+            //Debug.Log(checkDirectionClear(new Vector2(-1f, 0f), transform.position));
             for (int i = 0; i < R.Count; i++) {
+                Debug.Log("SOLUTION " + i);
                 for (int j = 0; j < R[i].Count; j++)
                 {
                     Debug.Log(R[i][j]);
                 }
-                Debug.Log("\n");
-
+                    
             }
-           // cc++;
+            cc++;
             //move._dir = Movement.Direction.left;
 
         }
