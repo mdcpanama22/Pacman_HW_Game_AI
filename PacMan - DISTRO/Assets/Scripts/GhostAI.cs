@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 /*****************************************************************************
@@ -138,24 +139,144 @@ public class GhostAI : MonoBehaviour {
     /// </summary>
     private int x_x_x = 0;
     private string[] Map;
-    static List<int> NOPP(Vector3 t, Vector3 p, int r)
+    private List<List<int>> orgList(List<List<int>> R)
     {
 
+        return R;
     }
-    static List<List<int>> NOP(Vector3 t, Vector3 p, List<int> R)
+    /// <summary>
+    /// Compares previous magnitude to the would be magnitude
+    /// if it is less then it is closer
+    /// </summary>
+    /// <param name="magT"></param>
+    /// <param name="magC"></param>
+    /// <returns></returns>
+    private bool smallerM(float magT, float magC)
     {
+        if(magC < magT)
+        {
+            return true;
+        }
 
-        return new List<List<int>>();
+        return false;
     }
+    public bool checkDirectionClear(Vector2 direction, Vector3 t)
+    {
+        int y = -1 * Mathf.RoundToInt(t.y);
+        int x = Mathf.RoundToInt(t.x);
+
+
+
+        if (direction.x == 0 && direction.y == 1)
+        {
+            y = -1 * Mathf.FloorToInt(t.y);
+            if (move.Map[y - 1][x] == '-' || move.Map[y - 1][x] == '#')
+            {
+                return false;
+            }
+        }
+        else if (direction.x == 1 && direction.y == 0)
+        {
+            x = Mathf.FloorToInt(t.x);
+            if (move.Map[y][x + 1] == '-' || move.Map[y][x + 1] == '#')
+            {
+                return false;
+            }
+        }
+        else if (direction.x == 0 && direction.y == -1)
+        {
+            y = -1 * Mathf.CeilToInt(t.y);
+            if (move.Map[y + 1][x] == '-' || move.Map[y + 1][x] == '#')
+            {
+                return false;
+            }
+        }
+        else if (direction.x == -1 && direction.y == 0)
+        {
+            x = Mathf.CeilToInt(t.x);
+            if (move.Map[y][x - 1] == '-' || move.Map[y][x - 1] == '#')
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    private List<List<int>> NOP(Vector3 t, Vector3 p, List<List<int>> R)
+    {
+        if(R.Count == 0)
+        {
+            R.Add(new List<int>());
+        }
+        Vector3 d = t - p; //current - pacman
+        float m = d.magnitude; // magnitude of d
+        Vector3 tempT = t;
+        if(m != 0)
+        {
+            //UP
+            if(checkDirectionClear(new Vector2(0f, 1f), t))
+            {
+                if(smallerM(m, (t + new Vector3(0f, 1f, 0f)).magnitude))
+                {
+                    t += new Vector3(0f, 1f, 0f);
+                    R[R.Count - 1].Add(0);
+                    return NOP(t, p, R);
+                }
+            }//DOWN
+            if(checkDirectionClear(new Vector2(0f, -1f), t))
+            {
+                if (smallerM(m, (t + new Vector3(0f, -1f, 0f)).magnitude))
+                {
+                    t += new Vector3(0f, -1f, 0f);
+                    R[R.Count - 1].Add(2);
+                    return NOP(t, p, R);
+                }
+            }
+            //LEFT
+            if (checkDirectionClear(new Vector2(1f, 0f), t))
+            {
+                if (smallerM(m, (t + new Vector3(1f, 0f, 0f)).magnitude))
+                {
+                    t += new Vector3(1f, 0f, 0f);
+                    R[R.Count - 1].Add(1);
+                    return NOP(t, p, R);
+                }
+            }
+            //RIGHT
+            if (checkDirectionClear(new Vector2(-1f, 0f), t))
+            {
+                if (smallerM(m, (t + new Vector3(-1f, 0f, 0f)).magnitude))
+                {
+                    t += new Vector3(-1f, 0f, 0f);
+                    R[R.Count - 1].Add(3);
+                    return NOP(t, p, R);
+                }
+            }
+        }else{
+            //Reached path
+            R.Add(new List<int>());
+        }
+        return R;
+    }
+
+    private int cc = 0;
     void Update() {
-        if (name == "Blinky(Clone)")
+        if (name == "Blinky(Clone)" && cc == 0)
         {
             Debug.Log("T: " + transform.position);
             Debug.Log(transform.position - pacMan.transform.position + "  " + (transform.position - pacMan.transform.position).magnitude);
             Debug.Log("pM: " + pacMan.transform.position);
-            Map = move.Map;
-            int[,] nop = new int;
-            Debug.Log(NOP(transform.position, pacMan.transform, nop));
+            List<List<int>> Results = new List<List<int>>();
+            List<List<int>> R = NOP(transform.position, pacMan.transform.position, Results);
+
+            for (int i = 0; i < R.Count; i++) {
+                for (int j = 0; j < R[i].Count; j++)
+                {
+                    Debug.Log(R[i][j]);
+                }
+                Debug.Log("\n");
+
+            }
+           // cc++;
             //move._dir = Movement.Direction.left;
 
         }
